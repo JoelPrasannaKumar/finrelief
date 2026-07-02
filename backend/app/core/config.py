@@ -27,15 +27,18 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: str = "*"
 
-    from pydantic import field_validator
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",") if i.strip()]
-        return v
+    @property
+    def cors_origins_list(self) -> List[str]:
+        if not self.CORS_ORIGINS:
+            return []
+        if self.CORS_ORIGINS.startswith("["):
+            try:
+                return json.loads(self.CORS_ORIGINS)
+            except Exception:
+                pass
+        return [i.strip() for i in self.CORS_ORIGINS.split(",") if i.strip()]
 
     class Config:
         env_file = ".env"
