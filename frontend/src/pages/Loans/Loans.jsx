@@ -13,17 +13,15 @@ const LOAN_TYPES = [
   { value: 'personal', label: 'Personal Loan' },
   { value: 'home', label: 'Home Loan' },
   { value: 'auto', label: 'Auto Loan' },
-  { value: 'education', label: 'Education Loan' },
+  { value: 'student', label: 'Student Loan' },
   { value: 'business', label: 'Business Loan' },
   { value: 'credit_card', label: 'Credit Card' },
-  { value: 'other', label: 'Other' },
 ]
 
 const STATUSES = [
   { value: 'active', label: 'Active' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'defaulted', label: 'Defaulted' },
-  { value: 'npa', label: 'NPA' },
   { value: 'settled', label: 'Settled' },
 ]
 
@@ -33,8 +31,8 @@ function formatCurrency(n) {
 }
 
 const defaultValues = {
-  lender_name: '', loan_type: 'personal', original_amount: '', outstanding_balance: '',
-  interest_rate: '', emi_amount: '', overdue_months: 0, status: 'active', account_number: '',
+  lender_name: '', loan_type: 'personal', loan_amount: '', outstanding_balance: '',
+  interest_rate: '', monthly_emi: '', overdue_months: 0, loan_status: 'active', notes: '',
 }
 
 export default function Loans() {
@@ -81,12 +79,15 @@ export default function Loans() {
     setIsSaving(true)
     try {
       const payload = {
-        ...data,
-        original_amount: Number(data.original_amount),
+        lender_name: data.lender_name,
+        loan_type: data.loan_type,
+        loan_status: data.loan_status,
+        loan_amount: Number(data.loan_amount),
         outstanding_balance: Number(data.outstanding_balance),
-        interest_rate: Number(data.interest_rate),
-        emi_amount: Number(data.emi_amount),
+        interest_rate: Number(data.interest_rate || 0),
+        monthly_emi: Number(data.monthly_emi || 0),
         overdue_months: Number(data.overdue_months || 0),
+        notes: data.notes || null,
       }
       if (editingLoan) {
         await loansAPI.update(editingLoan.id, payload)
@@ -98,7 +99,9 @@ export default function Loans() {
       setModalOpen(false)
       fetchLoans()
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to save loan')
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Failed to save loan')
+      toast.error(msg)
     } finally {
       setIsSaving(false)
     }
@@ -232,15 +235,15 @@ export default function Loans() {
 
             <div className="form-group">
               <label className="form-label">Status</label>
-              <select className="form-select" {...register('status')}>
+              <select className="form-select" {...register('loan_status')}>
                 {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
 
             <div className="form-group">
               <label className="form-label">Original Loan Amount (₹) *</label>
-              <input type="number" className={`form-input ${errors.original_amount ? 'error' : ''}`} placeholder="500000" {...register('original_amount', { required: 'Required', min: 1 })} />
-              {errors.original_amount && <span className="form-error">{errors.original_amount.message}</span>}
+              <input type="number" className={`form-input ${errors.loan_amount ? 'error' : ''}`} placeholder="500000" {...register('loan_amount', { required: 'Required', min: 1 })} />
+              {errors.loan_amount && <span className="form-error">{errors.loan_amount.message}</span>}
             </div>
 
             <div className="form-group">
@@ -251,7 +254,7 @@ export default function Loans() {
 
             <div className="form-group">
               <label className="form-label">Monthly EMI (₹)</label>
-              <input type="number" className="form-input" placeholder="12000" {...register('emi_amount')} />
+              <input type="number" className="form-input" placeholder="12000" {...register('monthly_emi')} />
             </div>
 
             <div className="form-group">
@@ -265,8 +268,8 @@ export default function Loans() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Account Number</label>
-              <input type="text" className="form-input" placeholder="XXXX-XXXX" {...register('account_number')} />
+              <label className="form-label">Notes (Optional)</label>
+              <input type="text" className="form-input" placeholder="Any additional notes..." {...register('notes')} />
             </div>
           </div>
 
