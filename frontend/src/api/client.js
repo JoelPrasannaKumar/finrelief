@@ -49,8 +49,8 @@ export const authAPI = {
 
 // ─── Profile API ───
 export const profileAPI = {
-  get: () => client.get('/api/profile'),
-  update: (data) => client.put('/api/profile', data),
+  get: () => client.get('/api/users/profile'),
+  update: (data) => client.put('/api/users/profile', data),
 }
 
 // ─── Loans API ───
