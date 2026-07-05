@@ -9,8 +9,6 @@ import './profile.css'
 const EMPLOYMENT_TYPES = [
   { value: 'salaried', label: 'Salaried Employee' },
   { value: 'self_employed', label: 'Self Employed' },
-  { value: 'business', label: 'Business Owner' },
-  { value: 'freelancer', label: 'Freelancer' },
   { value: 'unemployed', label: 'Unemployed' },
   { value: 'retired', label: 'Retired' },
 ]
@@ -62,18 +60,23 @@ export default function Profile() {
   const onSubmit = async (data) => {
     setIsLoading(true)
     try {
-      const payload = {
-        ...data,
+      // Profile payload — does NOT include full_name (that's a user field)
+      const profilePayload = {
         monthly_income: Number(data.monthly_income),
         monthly_expenses: Number(data.monthly_expenses),
+        employment_type: data.employment_type,
         credit_score: Number(data.credit_score),
-        dependents: Number(data.dependents),
+        dependents: Number(data.dependents || 0),
+        city: data.city || null,
+        state: data.state || null,
       }
-      const res = await profileAPI.update(payload)
+      await profileAPI.update(profilePayload)
       updateUser({ full_name: data.full_name })
       toast.success('Profile updated successfully!')
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to update profile')
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Failed to update profile')
+      toast.error(msg)
     } finally {
       setIsLoading(false)
     }
